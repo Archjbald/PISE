@@ -1,0 +1,10 @@
+venv/
+dataset/
+__pycache__/
+.idea/
+logs/
+results/
+checkpoint/
+
+*.pth
+*.pyc
