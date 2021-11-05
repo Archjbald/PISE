@@ -58,8 +58,8 @@ class BaseDataset(data.Dataset):
         P1_path = os.path.join(self.image_dir, P1_name)  # person 1
         P2_path = os.path.join(self.image_dir, P2_name)  # person 2
 
-        SPL1_path = os.path.join(self.par_dir, P1_name)
-        SPL2_path = os.path.join(self.par_dir, P2_name)
+        SPL1_path = os.path.join(self.par_dir, P1_name[:-4] + '.png')
+        SPL2_path = os.path.join(self.par_dir, P2_name[:-4] + '.png')
 
         regions = (40, 0, 216, 256)
         P1_img = Image.open(P1_path).convert('RGB')  # .crop(regions)
@@ -94,7 +94,8 @@ class BaseDataset(data.Dataset):
 
         angle, shift, scale = self.getRandomAffineParam()
         angle, shift, scale = angle * 0.2, (
-        shift[0] * 0.5, shift[1] * 0.5), 1  # Reduce the deform parameters of the generated image
+            shift[0] * 0.5, shift[1] * 0.5), 1  # Reduce the deform parameters of the generated image
+
         P2_img = F.affine(P2_img, angle=angle, translate=shift, scale=scale, shear=0, fillcolor=(128, 128, 128))
         SPL2_img = F.affine(SPL2_img, angle=angle, translate=shift, scale=scale, shear=0, fillcolor=(128, 128, 128))
         center = (P1_img.size[0] * 0.5 + 0.5, P1_img.size[1] * 0.5 + 0.5)
