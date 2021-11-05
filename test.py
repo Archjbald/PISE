@@ -6,7 +6,7 @@ from itertools import islice
 import numpy as np
 import torch
 
-if __name__=='__main__':
+if __name__ == '__main__':
     # get testing options
     opt = TestOptions().parse()
     # creat a dataset
