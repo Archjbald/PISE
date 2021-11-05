@@ -1,3 +1,4 @@
+import os.path
 import sys
 import re
 import torch
@@ -129,7 +130,9 @@ class VggEncoder(nn.Module):
         # self.vgg = models.vgg19(pretrained=True).features
         vgg19 = torchvision.models.vgg.vgg19(pretrained=False)
         #You can download vgg19-dcbb9e9d.pth from https://github.com/pytorch/vision/tree/master/torchvision/models and change the related path.
-        vgg19.load_state_dict(torch.load('/home/zjs/.torch/models/vgg19-dcbb9e9d.pth'))
+        vgg_path = '/home/zjs/.torch/models/vgg19-dcbb9e9d.pth'
+        if os.path.isfile(vgg_path):
+            vgg19.load_state_dict(torch.load())
         self.vgg = vgg19.features
 
         for param in self.vgg.parameters():

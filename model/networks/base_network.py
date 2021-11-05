@@ -20,7 +20,7 @@ class BaseNetwork(nn.Module):
             self = self[0]
         num_params = 0
         for param in self.parameters():
-            num_params += param.numel()
+            num_params += param.numel() if param.requires_grad else 0
         print('Network [%s] was created. Total number of parameters: %.4f million. '
               'To see the architecture, do print(network).'
               % (type(self).__name__, num_params / 1000000))

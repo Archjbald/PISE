@@ -4,29 +4,29 @@ import data as Dataset
 from model import create_model
 from util.visualizer import Visualizer
 
-
 if __name__ == '__main__':
     # get training options
     opt = TrainOptions().parse()
+    # create a model
+    model = create_model(opt)
+
     # create a dataset
     dataset = Dataset.create_dataloader(opt)
     dataset_size = len(dataset) * opt.batchSize
     print('training images = %d' % dataset_size)
-    # create a model
-    model = create_model(opt)
-    # model = model.to()  
+    # model = model.to()
     # create a visualizer
     visualizer = Visualizer(opt)
     # training flag
     keep_training = True
-    max_iteration = opt.niter+opt.niter_decay
+    max_iteration = opt.niter + opt.niter_decay
     epoch = 0
     total_iteration = opt.iter_count
 
     # training process
-    while(keep_training):
+    while (keep_training):
         epoch_start_time = time.time()
-        epoch+=1
+        epoch += 1
         print('\n Training epoch: %d' % epoch)
 
         for i, data in enumerate(dataset):
@@ -39,9 +39,9 @@ if __name__ == '__main__':
             if total_iteration % opt.display_freq == 0:
                 visualizer.display_current_results(model.get_current_visuals(), epoch)
                 if hasattr(model, 'distribution'):
-                    visualizer.plot_current_distribution(model.get_current_dis()) 
+                    visualizer.plot_current_distribution(model.get_current_dis())
 
-            # print training loss and save logging information to the disk
+                    # print training loss and save logging information to the disk
             if total_iteration % opt.print_freq == 0:
                 losses = model.get_current_errors()
                 t = (time.time() - iter_start_time) / opt.batchSize
@@ -50,13 +50,13 @@ if __name__ == '__main__':
                     visualizer.plot_current_errors(total_iteration, losses)
 
             if total_iteration % opt.eval_iters_freq == 0:
-                model.eval() 
+                model.eval()
                 if hasattr(model, 'eval_metric_name'):
-                    eval_results = model.get_current_eval_results()  
+                    eval_results = model.get_current_eval_results()
                     visualizer.print_current_eval(epoch, total_iteration, eval_results)
                     if opt.display_id > 0:
                         visualizer.plot_current_score(total_iteration, eval_results)
-                    
+
             # save the latest model every <save_latest_freq> iterations to the disk
             if total_iteration % opt.save_latest_freq == 0:
                 print('saving the latest model (epoch %d, total_steps %d)' % (epoch, total_iteration))

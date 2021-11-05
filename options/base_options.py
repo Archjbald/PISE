@@ -22,28 +22,33 @@ class BaseOptions():
         parser.add_argument('--phase', type=str, default='train', help='train, val, test, etc')
         parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
 
-
         # input/output sizes
         parser.add_argument('--batchSize', type=int, default=8, help='input batch size')
-        parser.add_argument('--old_size', type=int, default=(256,256), help='Scale images to this size. The final image will be cropped to --crop_size.')
-        parser.add_argument('--load_size', type=int, default=1024, help='Scale images to this size. The final image will be cropped to --crop_size.')
-        parser.add_argument('--structure_nc', type=int, default=18 )
-        parser.add_argument('--image_nc', type=int, default=3 )
+        parser.add_argument('--old_size', type=int, default=(256, 256),
+                            help='Scale images to this size. The final image will be cropped to --crop_size.')
+        parser.add_argument('--load_size', type=int, default=1024,
+                            help='Scale images to this size. The final image will be cropped to --crop_size.')
+        parser.add_argument('--structure_nc', type=int, default=18)
+        parser.add_argument('--image_nc', type=int, default=3)
 
         # for setting inputs
         parser.add_argument('--dataroot', type=str, default='./dataset/fashion_data/')
         parser.add_argument('--dataset_mode', type=str, default='fashion')
         parser.add_argument('--fid_gt_path', type=str)
-        parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
+        parser.add_argument('--serial_batches', action='store_true',
+                            help='if true, takes images in order to make batches, otherwise takes them randomly')
         parser.add_argument('--nThreads', default=8, type=int, help='# threads for loading data')
-        parser.add_argument('--max_dataset_size', type=int, default=sys.maxsize, help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
+        parser.add_argument('--max_dataset_size', type=int, default=sys.maxsize,
+                            help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
 
         # display parameter define
         parser.add_argument('--display_winsize', type=int, default=256, help='display window size')
         parser.add_argument('--display_id', type=int, default=0, help='display id of the web')
         parser.add_argument('--display_port', type=int, default=8096, help='visidom port of the web display')
-        parser.add_argument('--display_single_pane_ncols', type=int, default=0, help='if positive, display all images in a single visidom web panel')
-        parser.add_argument('--display_env', type=str, default=parser.parse_known_args()[0].name.replace('_',''), help='the environment of visidom display')
+        parser.add_argument('--display_single_pane_ncols', type=int, default=0,
+                            help='if positive, display all images in a single visidom web panel')
+        parser.add_argument('--display_env', type=str, default=parser.parse_known_args()[0].name.replace('_', ''),
+                            help='the environment of visidom display')
 
         return parser
 
@@ -63,7 +68,6 @@ class BaseOptions():
         data_option_set = data.get_option_setter(opt.dataset_mode)
         parser = data_option_set(parser, self.isTrain)
 
-
         opt = parser.parse_args()
 
         return opt
@@ -74,13 +78,12 @@ class BaseOptions():
         opt = self.gather_options()
         opt.isTrain = self.isTrain
 
-            
         if opt.phase != 'val':
             self.print_options(opt)
 
         if torch.cuda.is_available():
             opt.device = torch.device("cuda")
-            torch.backends.cudnn.benchmark = True   # cudnn auto-tuner
+            torch.backends.cudnn.benchmark = True  # cudnn auto-tuner
         else:
             opt.device = torch.device("cpu")
 
