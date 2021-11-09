@@ -1,7 +1,7 @@
 import importlib
 import torch.utils.data
 from data.base_dataset import BaseDataset
-
+import os
 
 def find_dataset_using_name(dataset_name):
     # Given the option --dataset [datasetname],
@@ -34,7 +34,9 @@ def get_option_setter(dataset_name):
 
 
 def create_dataloader(opt):
-    dataset = find_dataset_using_name(opt.dataset_mode)
+    dataset_name = os.path.split(os.path.normpath('./dataset/test_data/'))[1]
+    dataset_name = dataset_name.replace('_data', '')
+    dataset = find_dataset_using_name(dataset_name)
     instance = dataset()
     instance.initialize(opt)
     print("dataset [%s] of size %d was created" %
