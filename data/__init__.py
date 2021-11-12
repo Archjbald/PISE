@@ -34,7 +34,7 @@ def get_option_setter(dataset_name):
 
 
 def create_dataloader(opt):
-    dataset_name = os.path.split(os.path.normpath('./dataset/test_data/'))[1]
+    dataset_name = os.path.split(os.path.normpath(opt.dataroot))[1]
     dataset_name = dataset_name.replace('_data', '')
     dataset = find_dataset_using_name(dataset_name)
     instance = dataset()

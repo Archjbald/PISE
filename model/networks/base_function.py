@@ -447,7 +447,7 @@ def calc_mean_std(feat, eps=1e-5):
 
 
 class Zencoder(nn.Module):
-    """ extract style amtrix """
+    """ extract style matrix """
 
     def __init__(self, input_nc, ngf=64, norm='instance', act='LeakyReLU', use_spect=True):
         super(Zencoder, self).__init__()
