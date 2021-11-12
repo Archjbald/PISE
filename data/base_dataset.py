@@ -28,7 +28,7 @@ class BaseDataset(data.Dataset):
         self.opt = opt
         self.image_dir, self.bone_file, self.name_pairs, self.par_dir = self.get_paths(opt)
         size = len(self.name_pairs)
-        self.dataset_size = size
+        self.dataset_size = min(opt.max_dataset_size, size)
         self.class_num = 8
 
         if isinstance(opt.load_size, int):
