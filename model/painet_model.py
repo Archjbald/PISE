@@ -60,7 +60,8 @@ class Painet(BaseModel):
 
         # define the generator
         self.net_G = network.define_g(opt, image_nc=opt.image_nc, structure_nc=opt.structure_nc, ngf=64,
-                                      use_spect=opt.use_spect_g, norm='instance', activation='LeakyReLU')
+                                      use_spect=opt.use_spect_g, norm='instance', activation='LeakyReLU',
+                                      use_gt=opt.use_gt)
 
         # define the discriminator 
         if self.opt.dataset_mode == 'fashion':
@@ -112,7 +113,7 @@ class Painet(BaseModel):
             self.input_SPL2 = input_SPL2.cuda(self.gpu_ids[0], non_blocking=True)
             self.label_P2 = label_P2.cuda(self.gpu_ids[0], non_blocking=True)
 
-            np.save(f'{time.time()}.npy', self.label_P2.clone().cpu().numpy())
+            # np.save(f'{time.time()}.npy', self.label_P2.clone().cpu().numpy())
 
         self.image_paths = []
         for i in range(self.input_P1.size(0)):

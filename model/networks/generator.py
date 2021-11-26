@@ -56,10 +56,11 @@ class ParsingNet(nn.Module):
 
 class PoseGenerator(BaseNetwork):
     def __init__(self, image_nc=3, structure_nc=18, output_nc=3, ngf=64, norm='instance',
-                 activation='LeakyReLU', use_spect=True, use_coord=False):
+                 activation='LeakyReLU', use_spect=True, use_coord=False, use_gt=False):
         super(PoseGenerator, self).__init__()
 
         self.use_coordconv = True
+        self.use_gt = use_gt
         self.match_kernel = 3
 
         norm_layer = get_norm_layer(norm_type=norm)
@@ -171,7 +172,8 @@ class PoseGenerator(BaseNetwork):
         par2 = SPL2_onehot
         '''
         parcode, mask = self.parnet(torch.cat((par1, pose1, pose2), 1))
-        par2 = parcode
+        if not self.use_gt:
+            par2 = parcode
 
         parcode = self.parenc(torch.cat((par1, par2, pose2, img1), 1))
 

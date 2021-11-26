@@ -40,6 +40,7 @@ class BaseOptions():
         parser.add_argument('--nThreads', default=8, type=int, help='# threads for loading data')
         parser.add_argument('--max_dataset_size', type=int, default=sys.maxsize,
                             help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
+        parser.add_argument('--use_gt', type=bool, default=False)
 
         # display parameter define
         parser.add_argument('--display_winsize', type=int, default=256, help='display window size')
