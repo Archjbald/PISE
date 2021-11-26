@@ -118,7 +118,7 @@ class Painet(BaseModel):
 
         self.image_paths = []
         for i in range(self.input_P1.size(0)):
-            self.image_paths.append(os.path.splitext(input['P1_path'][i])[0] + '_' + input['P2_path'][i])
+            self.image_paths.append(os.path.splitext(input['P1_path'][i])[0] + '___' + input['P2_path'][i])
 
     def bilinear_warp(self, source, flow):
         [b, c, h, w] = source.shape
