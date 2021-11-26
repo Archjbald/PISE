@@ -229,7 +229,7 @@ class BaseModel():
             print('process image ...... %s' % img_paths[i])
             short_path = ntpath.basename(img_paths[i])  # get image path
             name = os.path.splitext(short_path)[0]
-            img_name = '%s_%s.%s' % (name, data_name, data_ext)
+            img_name = '%s___%s.%s' % (name, data_name, data_ext)
 
             results_dir = os.path.join(self.opt.results_dir, os.path.basename(os.path.normpath(self.opt.dataroot)))
             util.mkdir(results_dir)
