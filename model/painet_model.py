@@ -10,6 +10,7 @@ import numpy as np
 from itertools import islice
 import random
 import os
+import time
 
 import torch.nn.functional as F
 
@@ -110,6 +111,8 @@ class Painet(BaseModel):
             self.input_BP2 = input_BP2.cuda(self.gpu_ids[0], non_blocking=True)
             self.input_SPL2 = input_SPL2.cuda(self.gpu_ids[0], non_blocking=True)
             self.label_P2 = label_P2.cuda(self.gpu_ids[0], non_blocking=True)
+
+            np.save(f'{time.time()}.npy', self.label_P2.clone().cpu().numpy())
 
         self.image_paths = []
         for i in range(self.input_P1.size(0)):
