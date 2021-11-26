@@ -5,6 +5,7 @@ __pycache__/
 logs/
 results/
 checkpoint/
+temp/
 
 *.pth
 *.pyc
