@@ -3,9 +3,12 @@ dataset/
 __pycache__/
 .idea/
 logs/
-results/
+result/
 checkpoint/
 temp/
+eval_results/
+
 
 *.pth
 *.pyc
+*.npy
