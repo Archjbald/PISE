@@ -92,6 +92,11 @@ class PoseGenerator(BaseNetwork):
 
         self.loss_fn = torch.nn.MSELoss()
 
+        for name, param in self.named_parameters():
+            key = name.split('.')[0]
+            if key not in ['Zencoder', 'parcode', 'parenc', 'efb', 'res', 'imgenc']:
+                param.requires_grad = False
+
     def addcoords(self, x):
         bs, _, h, w = x.shape
         xx_ones = torch.ones([bs, h, 1], dtype=x.dtype, device=x.device)

@@ -6,7 +6,7 @@ import util.util as util
 
 
 def find_network_using_name(target_network_name, filename, extend=None):
-    extend=filename if extend is None else extend
+    extend = filename if extend is None else extend
     target_class_name = target_network_name + extend
     module_name = 'model.networks.' + filename
     network = util.find_class_in_module(target_class_name, module_name)
@@ -17,18 +17,16 @@ def find_network_using_name(target_network_name, filename, extend=None):
     return network
 
 
-
 def create_network(cls, opt, **parameter_dic):
     for i in parameter_dic:
         print(i)
     net = cls(**parameter_dic)
     net.print_network()
     if len(opt.gpu_ids) > 0:
-        assert(torch.cuda.is_available())
+        assert (torch.cuda.is_available())
         net.cuda()
     net.init_weights(opt.init_type)
     return net
-
 
 
 def define_g(opt, name=None, filename=None, extend=None, **parameter_dic):
