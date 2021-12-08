@@ -49,8 +49,11 @@ class Painet(BaseModel):
 
     def __init__(self, opt):
         BaseModel.__init__(self, opt)
-        self.loss_names = ['app_gen', 'content_gen', 'style_gen',  # 'reg_gen',
-                           'ad_gen', 'dis_img_gen', 'par', 'par1']
+        self.loss_names = ['par', 'par1']
+        self.only_mask = not opt.mask
+        if not self.only_mask:
+            self.loss_names = ['app_gen', 'content_gen', 'style_gen',  # 'reg_gen',
+                               'ad_gen', 'dis_img_gen', ] + self.loss_names
 
         self.visual_names = ['input_P1', 'input_P2', 'img_gen']
         self.model_names = ['G', 'D']
@@ -73,6 +76,7 @@ class Painet(BaseModel):
             for i in trained_list:
                 if i in k:
                     flag = True
+                    break
             if flag:
                 # v.requires_grad = False
                 print(k)
@@ -90,10 +94,11 @@ class Painet(BaseModel):
                 lr=opt.lr, betas=(0.9, 0.999))
             self.optimizers.append(self.optimizer_G)
 
-            self.optimizer_D = torch.optim.Adam(itertools.chain(
-                filter(lambda p: p.requires_grad, self.net_D.parameters())),
-                lr=opt.lr * opt.ratio_g2d, betas=(0.9, 0.999))
-            self.optimizers.append(self.optimizer_D)
+            if not self.only_mask:
+                self.optimizer_D = torch.optim.Adam(itertools.chain(
+                    filter(lambda p: p.requires_grad, self.net_D.parameters())),
+                    lr=opt.lr * opt.ratio_g2d, betas=(0.9, 0.999))
+                self.optimizers.append(self.optimizer_D)
 
         # load the pre-trained model and schedulers
         self.setup(opt)
@@ -176,28 +181,29 @@ class Painet(BaseModel):
 
     def backward_G(self):
         """Calculate training loss for the generator"""
-        # Calculate regularzation loss to make transformed feature and target image feature in the same latent space
-        self.loss_reg_gen = self.loss_reg * self.opt.lambda_regularization
-
-        # Calculate l1 loss 
-        loss_app_gen = self.L1loss(self.img_gen, self.input_P2)
-        self.loss_app_gen = loss_app_gen * self.opt.lambda_rec
-
         # parsing loss
         label_P2 = self.label_P2.squeeze(1).long()
         # print(self.input_SPL2.min(), self.input_SPL2.max(), self.parsav.min(), self.parsav.max())
         self.loss_par = self.parLoss(self.parsav, label_P2)  # * 20.
         self.loss_par1 = self.L1loss(self.parsav, self.input_SPL2) * 100
 
-        # Calculate GAN loss
-        base_function._freeze(self.net_D)
-        D_fake = self.net_D(self.img_gen)
-        self.loss_ad_gen = self.GANloss(D_fake, True, False) * self.opt.lambda_g
+        if not self.only_mask:
+            # Calculate regularzation loss to make transformed feature and target image feature in the same latent space
+            self.loss_reg_gen = self.loss_reg * self.opt.lambda_regularization
 
-        # Calculate perceptual loss
-        loss_content_gen, loss_style_gen = self.Vggloss(self.img_gen, self.input_P2)
-        self.loss_style_gen = loss_style_gen * self.opt.lambda_style
-        self.loss_content_gen = loss_content_gen * self.opt.lambda_content
+            # Calculate l1 loss
+            loss_app_gen = self.L1loss(self.img_gen, self.input_P2)
+            self.loss_app_gen = loss_app_gen * self.opt.lambda_rec
+
+            # Calculate GAN loss
+            base_function._freeze(self.net_D)
+            D_fake = self.net_D(self.img_gen)
+            self.loss_ad_gen = self.GANloss(D_fake, True, False) * self.opt.lambda_g
+
+            # Calculate perceptual loss
+            loss_content_gen, loss_style_gen = self.Vggloss(self.img_gen, self.input_P2)
+            self.loss_style_gen = loss_style_gen * self.opt.lambda_style
+            self.loss_content_gen = loss_content_gen * self.opt.lambda_content
 
         total_loss = 0
 
@@ -211,9 +217,10 @@ class Painet(BaseModel):
         """update network weights"""
         self.forward()
 
-        self.optimizer_D.zero_grad()
-        self.backward_D()
-        self.optimizer_D.step()
+        if not self.only_mask:
+            self.optimizer_D.zero_grad()
+            self.backward_D()
+            self.optimizer_D.step()
 
         self.optimizer_G.zero_grad()
         self.backward_G()

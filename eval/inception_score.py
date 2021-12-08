@@ -9,7 +9,7 @@ import tarfile
 
 import numpy as np
 from six.moves import urllib
-import tensorflow as tf
+# import tensorflow as tf
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import glob
@@ -19,7 +19,7 @@ import sys
 
 MODEL_DIR = './imagenet'
 DATA_URL = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz'
-softmax = None
+softmax = True
 
 
 # Call this function with list of images. Each of elements should be a

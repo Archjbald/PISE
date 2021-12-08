@@ -92,8 +92,8 @@ def test(generated_images_dir, annotations_file_test):
 
 if __name__ == "__main__":
     # fix these paths
-    generated_images_dir = './results/fashion_APS/test_latest/images'
-    annotations_file_test = './dataset/fashion_data/fasion-resize-annotation-test.csv'
+    generated_images_dir = r'D:\Networks\PISE\eval_results\test_176'
+    annotations_file_test = 'dataset/test_data/test-annotation-test.csv'
 
     test(generated_images_dir, annotations_file_test)
     print(generated_images_dir)

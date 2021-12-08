@@ -56,11 +56,12 @@ class ParsingNet(nn.Module):
 
 class PoseGenerator(BaseNetwork):
     def __init__(self, image_nc=3, structure_nc=18, output_nc=3, ngf=64, norm='instance',
-                 activation='LeakyReLU', use_spect=True, use_coord=False, use_gt=False):
+                 activation='LeakyReLU', use_spect=True, use_coord=False, use_gt=False, only_mask=False):
         super(PoseGenerator, self).__init__()
 
         self.use_coordconv = True
         self.use_gt = use_gt
+        self.only_mask = only_mask
         self.match_kernel = 3
 
         norm_layer = get_norm_layer(norm_type=norm)
@@ -156,26 +157,26 @@ class PoseGenerator(BaseNetwork):
         codes_vector, exist_vector, img1code = self.Zencoder(img1, par1)
 
         ######### my par   for image editing.
-        '''
-        parcode,mask = self.parnet(torch.cat((par1, pose1, pose2),1))
-        parsav = parcode
-        par = torch.argmax(parcode, dim=1, keepdim=True)
-        bs, _, h, w = par.shape
-       # print(SPL2_img.shape,SPL1_img.shape)
-        num_class = 8
-        tmp = par.view( -1).long()
-        ones = torch.sparse.torch.eye(num_class).cuda() 
-        ones = ones.index_select(0, tmp)
-        SPL2_onehot = ones.view([bs, h,w, num_class])
-        #print(SPL2_onehot.shape)
-        SPL2_onehot = SPL2_onehot.permute(0, 3, 1, 2)
-        par2 = SPL2_onehot
-        '''
-        parcode, mask = self.parnet(torch.cat((par1, pose1, pose2), 1))
-        if not self.use_gt:
-            par2 = parcode
+        if False:
+            parcode, mask = self.parnet(torch.cat((par1, pose1, pose2), 1))
+            parsav = parcode
+            par = torch.argmax(parcode, dim=1, keepdim=True)
+            bs, _, h, w = par.shape
+            # print(SPL2_img.shape,SPL1_img.shape)
+            num_class = 8
+            tmp = par.view(-1).long()
+            ones = torch.sparse.torch.eye(num_class).cuda()
+            ones = ones.index_select(0, tmp)
+            SPL2_onehot = ones.view([bs, h, w, num_class])
+            # print(SPL2_onehot.shape)
+            SPL2_onehot = SPL2_onehot.permute(0, 3, 1, 2)
+            par2 = SPL2_onehot
+        else:
+            parcode, mask = self.parnet(torch.cat((par1, pose1, pose2), 1))
+            if not self.use_gt:
+                par2 = parcode
 
-        parcode = self.parenc(torch.cat((par1, par2, pose2, img1), 1))
+            parcode = self.parenc(torch.cat((par1, par2, pose2, img1), 1))
 
         # instance transfer
         for _ in range(1):
@@ -187,6 +188,9 @@ class PoseGenerator(BaseNetwork):
         img2code = self.imgenc(img2)
         img2code1 = feature_normalize(img2code)
         loss_reg = F.mse_loss(img2code, parcode)
+
+        if self.only_mask:
+            return parcode, loss_reg, par2
 
         if True:
             img1code = self.imgenc(img1)
