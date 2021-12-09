@@ -67,7 +67,7 @@ class Painet(BaseModel):
                                       use_gt=opt.use_gt)
 
         # define the discriminator 
-        if self.opt.dataset_mode == 'fashion':
+        if self.opt.dataset_mode == 'fashion' and not self.only_mask:
             self.net_D = network.define_d(opt, ndf=32, img_f=128, layers=4, use_spect=opt.use_spect_d)
 
         trained_list = ['parnet']
