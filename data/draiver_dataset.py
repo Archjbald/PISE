@@ -30,7 +30,7 @@ class DrAIverDataset(BaseDataset):
         name_pairs = self.init_categories(pairLst)
 
         image_dir = os.path.join(root, '%s' % phase)
-        bonesLst = os.path.join(root, 'draiver-annotation-%s.csv' % phase)  # 'draiver-annotation-%s.csv' % phase)
+        bonesLst = os.path.join(root, 'draiver-annotation_%s.csv' % phase)  # 'draiver-annotation-%s.csv' % phase)
         par_dir = os.path.join(root, '%sSPL8' %phase)
         return image_dir, bonesLst, name_pairs, par_dir
 
