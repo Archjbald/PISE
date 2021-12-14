@@ -92,10 +92,12 @@ class PoseGenerator(BaseNetwork):
 
         self.loss_fn = torch.nn.MSELoss()
 
-        for name, param in self.named_parameters():
-            key = name.split('.')[0]
-            if key not in ['Zencoder', 'parcode', 'parenc', 'efb', 'res', 'imgenc']:
-                param.requires_grad = False
+        if self.only_mask:
+            for name, param in self.named_parameters():
+                key = name.split('.')[0]
+                if key in ['res1', 'dec', 'phi', 'theta', 'getMatrix']:
+                # if key not in ['Zencoder', 'parcode', 'parenc', 'efb', 'res', 'imgenc']:
+                    param.requires_grad = False
 
     def addcoords(self, x):
         bs, _, h, w = x.shape
@@ -195,7 +197,7 @@ class PoseGenerator(BaseNetwork):
         loss_reg = F.mse_loss(img2code, parcode)
 
         if self.only_mask:
-            return parcode, loss_reg, par2
+            return par2, loss_reg, par2
 
         if True:
             img1code = self.imgenc(img1)

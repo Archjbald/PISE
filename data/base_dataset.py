@@ -128,7 +128,6 @@ class BaseDataset(data.Dataset):
         string = self.annotation_file.loc[name]
         array = pose_utils.load_pose_cords_from_strings(string['keypoints_y'], string['keypoints_x'])
         pose = pose_utils.cords_to_map(array, self.load_size, self.opt.old_size, affine_matrix)
-        # pose = np.transpose(pose, (2, 0, 1))
         pose = np.transpose(pose, (2, 0, 1))
         pose = torch.Tensor(pose)
         return pose

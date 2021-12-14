@@ -35,14 +35,15 @@ class DrAIverDataset(BaseDataset):
         par_dir = os.path.join(root, '%sSPL8' %phase)
         return image_dir, bonesLst, name_pairs, par_dir
 
-    def init_categories(self, pairLst):
+    def init_categories(self, pairLst, take_dripe=False):
         pairs_file_train = pd.read_csv(pairLst)
         size = len(pairs_file_train)
         pairs = []
         print('Loading data pairs ...')
         for i in range(size):
             pair = [pairs_file_train.iloc[i]['from'], pairs_file_train.iloc[i]['to']]
-            pairs.append(pair)
+            if ('vp' in pair[0] and 'vp' in pair[1]) or take_dripe:
+                pairs.append(pair)
 
         print('Loading data pairs finished ...')
         return pairs
