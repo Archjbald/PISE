@@ -73,7 +73,8 @@ class Painet(BaseModel):
                     flag = True
             if flag:
                 # v.requires_grad = False
-                print(k)
+                # print(k)
+                pass
 
         if self.isTrain:
             # define the loss functions

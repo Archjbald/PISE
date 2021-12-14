@@ -50,7 +50,7 @@ class Painet(BaseModel):
     def __init__(self, opt):
         BaseModel.__init__(self, opt)
         self.loss_names = ['par', 'par1']
-        self.only_mask = not opt.mask
+        self.only_mask = opt.mask
         if not self.only_mask:
             self.loss_names = ['app_gen', 'content_gen', 'style_gen',  # 'reg_gen',
                                'ad_gen', 'dis_img_gen', ] + self.loss_names
@@ -79,7 +79,8 @@ class Painet(BaseModel):
                     break
             if flag:
                 # v.requires_grad = False
-                print(k)
+                # print(k)
+                pass
 
         if self.isTrain:
             # define the loss functions

@@ -61,21 +61,13 @@ class BaseDataset(data.Dataset):
         SPL1_path = os.path.join(self.par_dir, P1_name[:-4] + '.png')
         SPL2_path = os.path.join(self.par_dir, P2_name[:-4] + '.png')
 
-        regions = (40, 0, 216, 256)
         P1_img = Image.open(P1_path).convert('RGB')  # .crop(regions)
         P2_img = Image.open(P2_path).convert('RGB')  # .crop(regions)
         SPL1_img = Image.open(SPL1_path)  # .crop(regions)
         SPL2_img = Image.open(SPL2_path)  # .crop(regions)
 
-        if np.array(P1_img).shape[1] == 176:
-            tmp = np.ones([256, 40, 3]) * 255
-            P1_img = Image.fromarray(np.uint8(np.concatenate([tmp, np.array(P1_img), tmp], 1)))
-            P2_img = Image.fromarray(np.uint8(np.concatenate([tmp, np.array(P2_img), tmp], 1)))
-
-        # P1_img = F.resize(P1_img, self.load_size)
-        # P2_img = F.resize(P2_img, self.load_size)
-        # SPL1_img = F.resize(SPL1_img, (256,256),interpolation=0)
-        # SPL2_img = F.resize(SPL2_img, (256,256),interpolation=0)
+        P1_img = self.pad_old(P1_img)
+        P2_img = self.pad_old(P2_img)
 
         s1np = np.expand_dims(np.array(SPL1_img), -1)
         s2np = np.expand_dims(np.array(SPL2_img), -1)
@@ -136,6 +128,7 @@ class BaseDataset(data.Dataset):
         string = self.annotation_file.loc[name]
         array = pose_utils.load_pose_cords_from_strings(string['keypoints_y'], string['keypoints_x'])
         pose = pose_utils.cords_to_map(array, self.load_size, self.opt.old_size, affine_matrix)
+        # pose = np.transpose(pose, (2, 0, 1))
         pose = np.transpose(pose, (2, 0, 1))
         pose = torch.Tensor(pose)
         return pose
@@ -215,3 +208,19 @@ class BaseDataset(data.Dataset):
         matrix_inv = np.concatenate((matrix_inv, pad), 0)
         matrix = np.linalg.inv(matrix_inv)
         return matrix
+
+    def pad_old(self, img):
+        height, width = self.opt.old_size
+        array = np.array(img)
+
+        pad_h = 0
+        pad_w = 0
+        array_pad = np.zeros([256, 256] + list(array.shape[2:]), dtype=array.dtype)
+        if height < 256:
+            pad_h = (256 - height) // 2
+        if width < 256:
+            pad_w = (256 - width) // 2
+
+        array_pad[pad_h:256 - pad_h, pad_w:256 - pad_w] = array
+
+        return Image.fromarray(array_pad)
