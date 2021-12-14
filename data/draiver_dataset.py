@@ -35,7 +35,7 @@ class DrAIverDataset(BaseDataset):
         par_dir = os.path.join(root, '%sSPL8' %phase)
         return image_dir, bonesLst, name_pairs, par_dir
 
-    def init_categories(self, pairLst, take_dripe=False):
+    def init_categories(self, pairLst, take_dripe=True):
         pairs_file_train = pd.read_csv(pairLst)
         size = len(pairs_file_train)
         pairs = []
