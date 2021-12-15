@@ -25,6 +25,7 @@ def create_network(cls, opt, **parameter_dic):
     if len(opt.gpu_ids) > 0:
         assert (torch.cuda.is_available())
         net.cuda()
+        net = torch.nn.DataParallel(net, opt.gpu_ids)
     net.init_weights(opt.init_type)
     return net
 
