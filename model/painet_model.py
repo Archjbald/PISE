@@ -56,7 +56,9 @@ class Painet(BaseModel):
                                'ad_gen', 'dis_img_gen', ] + self.loss_names
 
         self.visual_names = ['input_P1', 'input_P2', 'img_gen']
-        self.model_names = ['G', 'D']
+        self.model_names = ['G']
+        if not self.only_mask:
+            self.model_names += ['D']
 
         self.FloatTensor = torch.cuda.FloatTensor if len(self.gpu_ids) > 0 \
             else torch.FloatTensor
