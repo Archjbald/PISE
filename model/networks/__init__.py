@@ -1,5 +1,5 @@
 import torch
-from model.networks.base_network import BaseNetwork
+from model.networks.base_network import BaseNetwork, BaseNetworkParallel
 from model.networks.discriminator import *
 from model.networks.generator import *
 import util.util as util
@@ -24,8 +24,9 @@ def create_network(cls, opt, **parameter_dic):
     net.print_network()
     if len(opt.gpu_ids) > 0:
         assert (torch.cuda.is_available())
+        if len(opt.gpu_ids) > 1:
+            net = BaseNetworkParallel(net, opt.gpu_ids)
         net.cuda()
-        net = torch.nn.DataParallel(net, opt.gpu_ids)
     net.init_weights(opt.init_type)
     return net
 

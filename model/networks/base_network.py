@@ -7,6 +7,21 @@ import torch.nn as nn
 from torch.nn import init
 
 
+class BaseNetworkParallel(nn.Module):
+    def __init__(self, model, device_ids):
+        super(BaseNetworkParallel, self).__init__()
+        self.model = nn.DataParallel(model, device_ids).cuda()
+
+    def forward(self, *input):
+        return self.model(*input)
+
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self.model.module, name)
+
+
 class BaseNetwork(nn.Module):
     def __init__(self):
         super(BaseNetwork, self).__init__()
