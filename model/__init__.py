@@ -1,6 +1,7 @@
 """This package contains modules related to function, network architectures, and models"""
 
 import importlib
+import torch
 from .base_model import BaseModel
 
 
@@ -30,5 +31,9 @@ def create_model(opt):
     """Create a model given the option."""
     model = find_model_using_name(opt.model)
     instance = model(opt)
+    if len(opt.gpu_ids) > 0:
+        assert (torch.cuda.is_available())
+        instance.cuda()
+        instance = torch.nn.DataParallel(instance, opt.gpu_ids)
     print("model [%s] was created" % type(instance).__name__)
     return instance
