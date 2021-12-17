@@ -166,6 +166,7 @@ class BaseModel():
                     continue
                 except:
                     pretrained_dict = torch.load(path)
+                    pretrained_dict = {k[6:] if len(k) > 6 and k[:6] == 'model.' else k: v for k, v in pretrained_dict.items()}
                     model_dict = net.state_dict()
                     try:
                         pretrained_dict_ = {k: v for k, v in pretrained_dict.items() if k in model_dict}
@@ -178,8 +179,9 @@ class BaseModel():
 
                         pretrained_dict = pretrained_dict_
                         net.load_state_dict(pretrained_dict)
-                        print('Pretrained network %s has excessive layers; Only loading layers that are used' % name)
-                    except:
+                        if len(pretrained_dict) > len(net.state_dict()):
+                            print('Pretrained network %s has excessive layers; Only loading layers that are used' % name)
+                    except Exception as e:
                         print('Pretrained network %s has fewer layers; The following are not initialized:' % name)
                         not_initialized = set()
                         for k, v in pretrained_dict.items():
