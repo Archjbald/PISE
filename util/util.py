@@ -12,7 +12,11 @@ from PIL import Image
 
 
 # convert a tensor into a numpy array
-def tensor2im(image_tensor, bytes=255.0, need_dec=False, imtype=np.uint8):
+def tensor2im(image_tensor, bytes=255.0, need_dec=False, num_classes=20, imtype=np.uint8):
+    if image_tensor.size()[-3] > 3:
+        num_classes = image_tensor.size()[-3]
+        need_dec = True
+        image_tensor = image_tensor.argmax(dim=-3, keepdim=True)
     if image_tensor.dim() == 3:
         image_numpy = image_tensor.cpu().float().numpy()
     else:
@@ -20,8 +24,7 @@ def tensor2im(image_tensor, bytes=255.0, need_dec=False, imtype=np.uint8):
 
     image_numpy = np.transpose(image_numpy, (1, 2, 0))
     if need_dec:
-        #        image_numpy = torch.argmax(image_numpy, 2)
-        image_numpy = decode_labels(image_numpy.astype(int))
+        image_numpy = decode_labels(image_numpy.astype(int), num_classes=num_classes)
     else:
         image_numpy = (image_numpy + 1) / 2.0 * bytes
 
@@ -47,23 +50,17 @@ def decode_labels(mask, num_images=1, num_classes=20):
       A batch with num_images RGB images of the same size as the input. 
     """
     h, w, c = mask.shape
+
     # assert(n >= num_images), 'Batch size %d should be greater or equal than number of images to save %d.' % (n, num_images)
     outputs = np.zeros((h, w, 3), dtype=np.uint8)
 
     img = Image.new('RGB', (len(mask[0]), len(mask)))
     pixels = img.load()
-    tmp = []
-    tmp1 = []
     for j_, j in enumerate(mask[:, :, 0]):
         for k_, k in enumerate(j):
-            # tmp1.append(k)
-            # tmp.append(k)
             if k < num_classes:
                 pixels[k_, j_] = label_colours[k]
-    # np.save('tmp1.npy', tmp1)
-    # np.save('tmp.npy',tmp)
     outputs = np.array(img)
-    # print(outputs[144,:,0])
     return outputs
 
 
@@ -356,5 +353,3 @@ def get_iteration(dir_name, file_name, net_name):
         model_name = file_name
     iterations = int(model_name.replace('_net_' + net_name + '.pth', ''))
     return iterations
-
-

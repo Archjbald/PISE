@@ -146,7 +146,7 @@ class Painet(BaseModel):
         ## test flow ##
 
         self.save_results(img_gen, data_name='vis')
-        if self.opt.save_input or self.opt.phase == 'val':
+        if (self.opt.save_input or self.opt.phase == 'val') and not self.opt.mask:
             self.save_results(self.input_P1, data_name='ref')
             self.save_results(self.input_P2, data_name='gt')
             result = torch.cat([self.input_P1, img_gen, self.input_P2], 3)
@@ -219,7 +219,7 @@ class Painet(BaseModel):
     def optimize_parameters(self):
         """update network weights"""
         self.forward()
-
+        self.save_results(self.img_gen, data_name='vis')
         if not self.only_mask:
             self.optimizer_D.zero_grad()
             self.backward_D()
