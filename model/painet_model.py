@@ -219,7 +219,6 @@ class Painet(BaseModel):
     def optimize_parameters(self):
         """update network weights"""
         self.forward()
-        self.save_results(self.img_gen, data_name='vis')
         if not self.only_mask:
             self.optimizer_D.zero_grad()
             self.backward_D()
