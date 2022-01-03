@@ -19,6 +19,10 @@ if __name__ == '__main__':
     visualizer = Visualizer(opt)
     # training flag
     keep_training = True
+
+    opt.niter = opt.nepoch * len(dataset)
+    opt.niter_decay = opt.nepoch_decay * len(dataset)
+
     max_iteration = opt.niter + opt.niter_decay
     epoch = 0
     total_iteration = opt.iter_count
@@ -28,6 +32,8 @@ if __name__ == '__main__':
         epoch_start_time = time.time()
         epoch += 1
         print('\n Training epoch: %d' % epoch)
+
+        model.net_G.use_gt_mask = epoch < opt.nepoch
 
         for i, data in enumerate(dataset):
             iter_start_time = time.time()

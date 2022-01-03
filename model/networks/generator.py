@@ -60,7 +60,7 @@ class PoseGenerator(BaseNetwork):
         super(PoseGenerator, self).__init__()
 
         self.use_coordconv = True
-        self.use_gt = use_gt
+        self.use_gt_mask = use_gt
         self.only_mask = only_mask
         self.match_kernel = 3
 
@@ -180,7 +180,7 @@ class PoseGenerator(BaseNetwork):
             par2 = SPL2_onehot
         else:
             parcode, mask = self.parnet(torch.cat((par1, pose1, pose2), 1))
-            if not self.use_gt:
+            if not self.use_gt_mask:
                 par2 = parcode
 
             parcode = self.parenc(torch.cat((par1, par2, pose2, img1), 1))

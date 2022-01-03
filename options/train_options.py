@@ -9,6 +9,8 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--iter_count', type=int, default=1, help='the starting epoch count')
         parser.add_argument('--niter', type=int, default=5000000, help='# of iter with initial learning rate')
         parser.add_argument('--niter_decay', type=int, default=0, help='# of iter to decay learning rate to zero')
+        parser.add_argument('--nepoch', type=int, default=400, help='# of epoch with initial learning rate')
+        parser.add_argument('--nepoch_decay', type=int, default=400, help='# of epoch to decay learning rate to zero')
 
         # learning rate and loss weight
         parser.add_argument('--lr_policy', type=str, default='lambda', help='learning rate policy[lambda|step|plateau]')

@@ -66,7 +66,7 @@ class Painet(BaseModel):
         # define the generator
         self.net_G = network.define_g(opt, image_nc=opt.image_nc, structure_nc=opt.structure_nc, ngf=64,
                                       use_spect=opt.use_spect_g, norm='instance', activation='LeakyReLU',
-                                      use_gt=opt.use_gt, only_mask=opt.mask)
+                                      use_gt=opt.use_gt_mask, only_mask=opt.mask)
 
         # define the discriminator 
         if not self.only_mask:
