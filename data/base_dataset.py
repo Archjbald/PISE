@@ -54,6 +54,9 @@ class BaseDataset(data.Dataset):
         return label_paths, image_paths, instance_paths, par_paths
 
     def __getitem__(self, index):
+        if self.opt.phase == 'train':
+            index = random.randint(0, self.dataset_size - 1)
+
         P1_name, P2_name = self.name_pairs[index]
         P1_path = os.path.join(self.image_dir, P1_name)  # person 1
         P2_path = os.path.join(self.image_dir, P2_name)  # person 2
