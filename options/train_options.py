@@ -18,11 +18,11 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--gan_mode', type=str, default='lsgan', choices=['wgan-gp', 'hinge', 'lsgan'])
 
         # display the results
-        parser.add_argument('--display_freq', type=int, default=200, help='frequency of showing training results on screen')
-        parser.add_argument('--eval_iters_freq', type=int, default=15000, help='frequency of showing training results on screen')
-        parser.add_argument('--print_freq', type=int, default=200, help='frequency of showing training results on console')
-        parser.add_argument('--save_latest_freq', type=int, default=20000, help='frequency of saving the latest results')
-        parser.add_argument('--save_iters_freq', type=int, default=20000, help='frequency of saving checkpoints at the end of epochs')
+        parser.add_argument('--display_freq', type=int, default=1, help='frequency of showing training results on screen')
+        parser.add_argument('--eval_freq', type=int, default=20, help='frequency of showing training results on screen')
+        parser.add_argument('--print_iters_freq', type=int, default=200, help='frequency of showing training results on console')
+        parser.add_argument('--save_latest_freq', type=int, default=200, help='frequency of saving the latest results')
+        parser.add_argument('--save_freq', type=int, default=200, help='frequency of saving checkpoints at the end of epochs')
         parser.add_argument('--no_html', action='store_true', help='do not save intermediate training results')
 
         self.isTrain = True

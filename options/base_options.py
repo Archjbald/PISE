@@ -22,6 +22,8 @@ class BaseOptions():
         parser.add_argument('--phase', type=str, default='train', help='train, val, test, etc')
         parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
         parser.add_argument('--mask', action='store_true', help='train only map parser')
+        parser.add_argument('--random', action='store_true', help='if true, randomly shuffle input images')
+
 
         # input/output sizes
         parser.add_argument('--batchSize', type=int, default=8, help='input batch size')

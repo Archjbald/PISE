@@ -27,8 +27,8 @@ class BaseDataset(data.Dataset):
     def initialize(self, opt):
         self.opt = opt
         self.image_dir, self.bone_file, self.name_pairs, self.par_dir = self.get_paths(opt)
-        size = len(self.name_pairs)
-        self.dataset_size = min(opt.max_dataset_size, size)
+        self.size = len(self.name_pairs)
+        self.dataset_size = min(opt.max_dataset_size, self.size)
         self.class_num = 8
 
         if isinstance(opt.load_size, int):
@@ -54,10 +54,11 @@ class BaseDataset(data.Dataset):
         return label_paths, image_paths, instance_paths, par_paths
 
     def __getitem__(self, index):
-        if self.opt.phase == 'train':
-            index = random.randint(0, self.dataset_size - 1)
+        if self.opt.phase == 'train' or self.opt.random:
+            index = random.randint(0, self.size - 1)
 
         P1_name, P2_name = self.name_pairs[index]
+
         P1_path = os.path.join(self.image_dir, P1_name)  # person 1
         P2_path = os.path.join(self.image_dir, P2_name)  # person 2
 
