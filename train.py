@@ -64,6 +64,7 @@ def train(opt):
             if hasattr(model, 'distribution'):
                 visualizer.plot_current_distribution(model.get_current_dis())
 
+        # evaluate
         if epoch % opt.eval_freq == 0:
             model.eval()
             if hasattr(model, 'eval_metric_name'):
@@ -79,8 +80,8 @@ def train(opt):
 
         # save the model every <save_iter_freq> iterations to the disk
         if epoch % opt.save_freq == 0:
-            print('saving the model of iterations %d' % total_iteration)
-            model.save_networks(total_iteration)
+            print('saving the model of epoch %d' % epoch)
+            model.save_networks(epoch)
 
         model.update_learning_rate()
 
