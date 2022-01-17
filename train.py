@@ -33,7 +33,7 @@ if __name__ == '__main__':
         epoch += 1
         print('\n Training epoch: %d' % epoch)
 
-        model.net_G.use_gt_mask = epoch < opt.nepoch
+        # model.net_G.use_gt_mask = epoch < opt.nepoch
 
         for i, data in enumerate(dataset):
             iter_start_time = time.time()
