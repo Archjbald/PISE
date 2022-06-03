@@ -10,7 +10,7 @@ class Visualizer():
     def __init__(self, opt):
         # self.opt = opt
         self.display_id = opt.display_id
-        self.use_html = opt.isTrain and not opt.no_html
+        self.use_html = opt.phase == 'test' or not opt.no_html
         self.win_size = opt.display_winsize
         self.name = opt.name
         if self.display_id > 0:
@@ -18,13 +18,14 @@ class Visualizer():
             self.vis = visdom.Visdom(port=opt.display_port, env=opt.display_env)
             self.display_single_pane_ncols = opt.display_single_pane_ncols
 
+        save_dir = opt.results_dir if opt.phase == 'test' else opt.checkpoints_dir
         if self.use_html:
-            self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
+            self.web_dir = os.path.join(save_dir, opt.name, 'web')
             self.img_dir = os.path.join(self.web_dir, 'images')
             print('create web directory %s...' % self.web_dir)
             util.mkdirs([self.web_dir, self.img_dir])
-        self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
-        self.eval_log_name = os.path.join(opt.checkpoints_dir, opt.name, 'eval_log.txt')
+        self.log_name = os.path.join(save_dir, opt.name, 'loss_log.txt')
+        self.eval_log_name = os.path.join(save_dir, opt.name, 'eval_log.txt')
         with open(self.log_name, "a") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)

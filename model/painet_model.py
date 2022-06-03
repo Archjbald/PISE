@@ -139,18 +139,18 @@ class Painet(BaseModel):
         input_sample = F.grid_sample(source, grid).view(b, c, -1)
         return input_sample
 
-    def test(self):
+    def test(self, save=False):
         """Forward function used in test time"""
-        img_gen, self.loss_reg, self.parsav = self.net_G(self.input_P1, self.input_P2, self.input_BP1, self.input_BP2,
+        self.img_gen, self.loss_reg, self.parsav = self.net_G(self.input_P1, self.input_P2, self.input_BP1, self.input_BP2,
                                                          self.input_SPL1, self.input_SPL2)
         ## test flow ##
-
-        self.save_results(img_gen, data_name='vis')
-        if (self.opt.save_input or self.opt.phase == 'val') and not self.opt.mask:
-            self.save_results(self.input_P1, data_name='ref')
-            self.save_results(self.input_P2, data_name='gt')
-            result = torch.cat([self.input_P1, img_gen, self.input_P2], 3)
-            self.save_results(result, data_name='all')
+        if save:
+            self.save_results(self.img_gen, data_name='vis')
+            if (self.opt.save_input or self.opt.phase == 'val') and not self.opt.mask:
+                self.save_results(self.input_P1, data_name='ref')
+                self.save_results(self.input_P2, data_name='gt')
+                result = torch.cat([self.input_P1, self.img_gen, self.input_P2], 3)
+                self.save_results(result, data_name='all')
 
     def forward(self):
         """Run forward processing to get the inputs"""
