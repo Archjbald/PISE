@@ -19,9 +19,10 @@ class BaseDataset(data.Dataset):
 
     @staticmethod
     def modify_commandline_options(parser, is_train):
-        parser.add_argument('--angle', type=float, default=False)
-        parser.add_argument('--shift', type=float, default=False)
-        parser.add_argument('--scale', type=float, default=False)
+        parser.add_argument('--angle', type=float, default=False, help="Max rotate angle in degrees")
+        parser.add_argument('--shift', type=float, default=False, help="Max shift in % of full size")
+        parser.add_argument('--scale', type=float, default=False, help="Min scale in %, max is 1")
+        parser.add_argument('--augment_proba', type=float, default=0.3)
         return parser
 
     def initialize(self, opt):
@@ -81,19 +82,19 @@ class BaseDataset(data.Dataset):
         SPL2_img = Image.fromarray(np.uint8(s2np))
 
         angle, shift, scale = self.getRandomAffineParam()
-        P1_img = F.affine(P1_img, angle=angle, translate=shift, scale=scale, shear=0, fillcolor=(128, 128, 128))
-        SPL1_img = F.affine(SPL1_img, angle=angle, translate=shift, scale=scale, shear=0, fillcolor=(128, 128, 128))
+        P1_img = F.affine(P1_img, angle=angle, translate=shift, scale=scale, shear=0)  # , fillcolor=(128, 128, 128)
+        SPL1_img = F.affine(SPL1_img, angle=angle, translate=shift, scale=scale, shear=0)  # , fillcolor=(128, 128, 128)
         center = (P1_img.size[0] * 0.5 + 0.5, P1_img.size[1] * 0.5 + 0.5)
         affine_matrix = self.get_affine_matrix(center=center, angle=angle, translate=shift, scale=scale, shear=0)
         BP1 = self.obtain_bone(P1_name, affine_matrix)
         P1 = self.trans(P1_img)
 
         angle, shift, scale = self.getRandomAffineParam()
-        angle, shift, scale = angle * 0.2, (
-            shift[0] * 0.5, shift[1] * 0.5), 1  # Reduce the deform parameters of the generated image
+        # angle, shift, scale = angle * 0.2, (
+        #     shift[0] * 0.5, shift[1] * 0.5), 1  # Reduce the deform parameters of the generated image
 
-        P2_img = F.affine(P2_img, angle=angle, translate=shift, scale=scale, shear=0, fillcolor=(128, 128, 128))
-        SPL2_img = F.affine(SPL2_img, angle=angle, translate=shift, scale=scale, shear=0, fillcolor=(128, 128, 128))
+        P2_img = F.affine(P2_img, angle=angle, translate=shift, scale=scale, shear=0)  # , fillcolor=(128, 128, 128)
+        SPL2_img = F.affine(SPL2_img, angle=angle, translate=shift, scale=scale, shear=0)  # , fillcolor=(128, 128, 128)
         center = (P1_img.size[0] * 0.5 + 0.5, P1_img.size[1] * 0.5 + 0.5)
         affine_matrix = self.get_affine_matrix(center=center, angle=angle, translate=shift, scale=scale, shear=0)
         BP2 = self.obtain_bone(P2_name, affine_matrix)
@@ -143,20 +144,24 @@ class BaseDataset(data.Dataset):
         assert False, "A subclass of BaseDataset must override self.name"
 
     def getRandomAffineParam(self):
-        if self.opt.angle is not False:
-            angle = np.random.uniform(low=self.opt.angle[0], high=self.opt.angle[1])
-        else:
-            angle = 0
-        if self.opt.scale is not False:
-            scale = np.random.uniform(low=self.opt.scale[0], high=self.opt.scale[1])
-        else:
-            scale = 1
-        if self.opt.shift is not False:
-            shift_x = np.random.uniform(low=self.opt.shift[0], high=self.opt.shift[1])
-            shift_y = np.random.uniform(low=self.opt.shift[0], high=self.opt.shift[1])
-        else:
-            shift_x = 0
-            shift_y = 0
+        angle = 0
+        shift_x = 0
+        shift_y = 0
+        scale = 1
+
+        is_train = self.opt.phase == 'train'
+        if is_train:
+            if self.opt.angle is not False and random.random() < self.opt.augment_proba:
+                max_angle = abs(self.opt.angle)
+                angle = int(np.random.uniform(low=-max_angle, high=max_angle))
+            if self.opt.scale is not False and random.random() < self.opt.augment_proba:
+                min_scale = min(self.opt.scale, 1.)
+                scale = np.random.uniform(low=min_scale, high=1.)
+            if self.opt.shift is not False and random.random() < self.opt.augment_proba:
+                max_shift = int(self.opt.shift * self.opt.load_size)
+                shift_x = int(np.random.uniform(low=-max_shift, high=max_shift))
+                shift_y = int(np.random.uniform(low=-max_shift, high=max_shift))
+
         return angle, (shift_x, shift_y), scale
 
     def get_inverse_affine_matrix(self, center, angle, translate, scale, shear):
