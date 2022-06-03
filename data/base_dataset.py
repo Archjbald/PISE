@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 import numpy as np
 import random
 import torchvision.transforms.functional as F
+import torchvision.transforms as T
 from util import pose_utils
 from PIL import Image
 import pandas as pd
@@ -22,6 +23,8 @@ class BaseDataset(data.Dataset):
         parser.add_argument('--angle', type=float, default=False, help="Max rotate angle in degrees")
         parser.add_argument('--shift', type=float, default=False, help="Max shift in % of full size")
         parser.add_argument('--scale', type=float, default=False, help="Min scale in %, max is 1")
+        parser.add_argument('--color', action='store_true', help='Color augment')
+
         parser.add_argument('--augment_proba', type=float, default=0.3)
         return parser
 
@@ -87,7 +90,6 @@ class BaseDataset(data.Dataset):
         center = (P1_img.size[0] * 0.5 + 0.5, P1_img.size[1] * 0.5 + 0.5)
         affine_matrix = self.get_affine_matrix(center=center, angle=angle, translate=shift, scale=scale, shear=0)
         BP1 = self.obtain_bone(P1_name, affine_matrix)
-        P1 = self.trans(P1_img)
 
         angle, shift, scale = self.getRandomAffineParam()
         # angle, shift, scale = angle * 0.2, (
@@ -95,9 +97,12 @@ class BaseDataset(data.Dataset):
 
         P2_img = F.affine(P2_img, angle=angle, translate=shift, scale=scale, shear=0)  # , fillcolor=(128, 128, 128)
         SPL2_img = F.affine(SPL2_img, angle=angle, translate=shift, scale=scale, shear=0)  # , fillcolor=(128, 128, 128)
-        center = (P1_img.size[0] * 0.5 + 0.5, P1_img.size[1] * 0.5 + 0.5)
+        center = (P2_img.size[0] * 0.5 + 0.5, P2_img.size[1] * 0.5 + 0.5)
         affine_matrix = self.get_affine_matrix(center=center, angle=angle, translate=shift, scale=scale, shear=0)
         BP2 = self.obtain_bone(P2_name, affine_matrix)
+
+        P1_img, P2_img = self.color_augment(P1_img, P2_img)
+        P1 = self.trans(P1_img)
         P2 = self.trans(P2_img)
 
         SPL1_img = np.expand_dims(np.array(SPL1_img)[:, :, 0], 0)  # [:,:,40:-40] # 1*256*176
@@ -163,6 +168,24 @@ class BaseDataset(data.Dataset):
                 shift_y = int(np.random.uniform(low=-max_shift, high=max_shift))
 
         return angle, (shift_x, shift_y), scale
+
+    def color_augment(self, *imgs):
+        if not self.opt.color or not self.opt.phase == 'train':
+            return imgs
+        img_stack = Image.fromarray(np.vstack([np.array(img) for img in imgs]))
+
+        if random.random() < self.opt.augment_proba:
+            img_stack = F.to_grayscale(img_stack)
+        elif random.random() < self.opt.augment_proba:
+            jitter = T.ColorJitter(brightness=.5, hue=.3)
+            img_stack = jitter(img_stack)
+
+        if random.random() < self.opt.augment_proba:
+            img_stack = F.gaussian_blur(img_stack, kernel_size=(3 + 2 * random.randint(0, 3)))
+
+        img_stack = np.array(img_stack)
+        height = img_stack.shape[0] // len(imgs)
+        return [Image.fromarray(img_stack[height * i:height * (i+1)]) for i in range(len(imgs))]
 
     def get_inverse_affine_matrix(self, center, angle, translate, scale, shear):
         # code from https://pytorch.org/docs/stable/_modules/torchvision/transforms/functional.html#affine
