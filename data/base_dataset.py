@@ -175,7 +175,7 @@ class BaseDataset(data.Dataset):
         img_stack = Image.fromarray(np.vstack([np.array(img) for img in imgs]))
 
         if random.random() < self.opt.augment_proba:
-            img_stack = F.to_grayscale(img_stack)
+            img_stack = F.to_grayscale(img_stack, num_output_channels=3)
         elif random.random() < self.opt.augment_proba:
             jitter = T.ColorJitter(brightness=.5, hue=.3)
             img_stack = jitter(img_stack)
