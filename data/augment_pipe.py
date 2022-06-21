@@ -74,6 +74,19 @@ def apply_transfo_random(images, transfo, p, classes=(None,)):
     return trans_images
 
 
+def translate(x, params):
+    h, w = x.shape[-2:]
+    params = [int(p) for p in params]
+    x_trans = x[:, max(0, -params[0]):min(h, h - params[0]), max(0, -params[1]):min(w, w - params[1])]
+
+    new_x = torch.ones_like(x) * -1
+    h = max(0, params[0])
+    w = max(0, params[1])
+    new_x[:, h:h + x_trans.shape[-2],
+          w: w + x_trans.shape[-1]] = x_trans
+    return new_x
+
+
 class AugmentPipe(torch.nn.Module):
     def __init__(self, blit=0, geom=0, color=0, deform=True):
         super(AugmentPipe, self).__init__()
@@ -108,11 +121,12 @@ class AugmentPipe(torch.nn.Module):
             images = apply_transfo_random(images, f.rotate, self.blit * self.p, (90, 180, 270))
 
             # Apply integer translation with probability (xint * strength).
-            for i, img in enumerate(images):
+            for i in range(len(images)):
                 if random.random() < self.blit * self.p * self.deform:
-                    images[i] = f.affine(img,
-                                         translate=[0.125 * d * (random.random() * 2 - 1) for d in images.shape[-2:]],
-                                         angle=0, scale=1., shear=0., fill=fill)
+                    # images[i] = f.affine(img,
+                    #                      translate=[0.125 * d * (random.random() * 2 - 1) for d in images.shape[-2:]],
+                    #                      angle=0, scale=1., shear=0., fill=fill)
+                    images[i] = translate(images[i], [0.125 * d * (random.random() * 2 - 1) for d in images.shape[-2:]])
 
         if self.geom > 0:
             # Apply isotropic scaling with probability (scale * strength).
@@ -149,9 +163,10 @@ class AugmentPipe(torch.nn.Module):
 
                 # Apply fractional translation with probability (xfrac * strength).
                 if random.random() < self.geom * self.p * self.deform:
-                    images[i] = f.affine(img,
-                                         translate=[0.125 * d * random.random() for d in images.shape[-2:]],
-                                         angle=0, scale=1., shear=0., fill=fill)
+                    # images[i] = f.affine(img,
+                    #                      translate=[0.125 * d * random.random() for d in images.shape[-2:]],
+                    #                      angle=0, scale=1., shear=0., fill=fill)
+                    images[i] = translate(img, [0.125 * d * random.random() for d in images.shape[-2:]])
 
                 # Color transformation
                 img = images[i] + 1 / 2
