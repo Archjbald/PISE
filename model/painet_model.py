@@ -14,6 +14,8 @@ import time
 
 import torch.nn.functional as F
 
+from data.augment_pipe import AugmentPipe
+
 
 class Painet(BaseModel):
     def name(self):
@@ -103,6 +105,8 @@ class Painet(BaseModel):
                     lr=opt.lr * opt.ratio_g2d, betas=(0.9, 0.999))
                 self.optimizers.append(self.optimizer_D)
 
+                self.augment = AugmentPipe(blit=1., geom=1., color=1., deform=True)
+
         # load the pre-trained model and schedulers
         self.setup(opt)
 
@@ -160,7 +164,12 @@ class Painet(BaseModel):
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator"""
         # Real
+        if self.augment is not None:
+            real = self.augment(real)
+            fake = self.augment(fake)
         D_real = netD(real)
+        if self.augment is not None:
+            self.augment.update_p(D_real.sign())
         D_real_loss = self.GANloss(D_real, True, True)
         # fake
         D_fake = netD(fake.detach())

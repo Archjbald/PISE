@@ -18,8 +18,8 @@ def find_network_using_name(target_network_name, filename, extend=None):
 
 
 def create_network(cls, opt, **parameter_dic):
-    for i in parameter_dic:
-        print(i)
+    # for i in parameter_dic:
+    #     print(i)
     net = cls(**parameter_dic)
     net.print_network()
     if len(opt.gpu_ids) > 0:

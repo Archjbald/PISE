@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from util import util
 import numpy as np
 
+
 class AdversarialLoss(nn.Module):
     r"""
     Adversarial loss
@@ -30,6 +31,7 @@ class AdversarialLoss(nn.Module):
         elif type == 'hinge':
             self.criterion = nn.ReLU()
 
+
     def __call__(self, outputs, is_real, for_dis=None):
         if self.type == 'hinge':
             if for_dis:
@@ -43,6 +45,7 @@ class AdversarialLoss(nn.Module):
             labels = (self.real_label if is_real else self.fake_label).expand_as(outputs)
             loss = self.criterion(outputs, labels)
             return loss
+
 
 class VGGLoss(nn.Module):
     r"""
@@ -63,7 +66,7 @@ class VGGLoss(nn.Module):
         f_T = f.transpose(1, 2)
         G = f.bmm(f_T) / (h * w * ch)
         return G
-        
+
     def __call__(self, x, y):
         # Compute features
         x_vgg, y_vgg = self.vgg(x), self.vgg(y)
@@ -82,8 +85,8 @@ class VGGLoss(nn.Module):
         style_loss += self.criterion(self.compute_gram(x_vgg['relu4_4']), self.compute_gram(y_vgg['relu4_4']))
         style_loss += self.criterion(self.compute_gram(x_vgg['relu5_2']), self.compute_gram(y_vgg['relu5_2']))
 
-
         return content_loss, style_loss
+
 
 class StyleLoss(nn.Module):
     r"""
@@ -119,7 +122,6 @@ class StyleLoss(nn.Module):
         return style_loss
 
 
-
 class PerceptualLoss(nn.Module):
     r"""
     Perceptual loss, VGG-based
@@ -151,23 +153,21 @@ class PerceptualCorrectness(nn.Module):
 
     """
 
-    def __init__(self, layer=['rel1_1','relu2_1','relu3_1','relu4_1']):
+    def __init__(self, layer=['rel1_1', 'relu2_1', 'relu3_1', 'relu4_1']):
         super(PerceptualCorrectness, self).__init__()
         self.add_module('vgg', VGG19())
-        self.layer = layer  
-        self.eps=1e-8 
+        self.layer = layer
+        self.eps = 1e-8
         self.resample = Resample2d(4, 1, sigma=2)
 
     def __call__(self, target, source, flow_list, used_layers, mask=None, use_bilinear_sampling=True):
-        used_layers=sorted(used_layers, reverse=True)
+        used_layers = sorted(used_layers, reverse=True)
         # self.target=target
         # self.source=source
         self.target_vgg, self.source_vgg = self.vgg(target), self.vgg(source)
         loss = 0
         for i in range(len(flow_list)):
             loss += self.calculate_loss(flow_list[i], self.layer[used_layers[i]], mask, use_bilinear_sampling)
-
-
 
         return loss
 
@@ -177,21 +177,20 @@ class PerceptualCorrectness(nn.Module):
         [b, c, h, w] = target_vgg.shape
 
         # maps = F.interpolate(maps, [h,w]).view(b,-1)
-        flow = F.interpolate(flow, [h,w])
+        flow = F.interpolate(flow, [h, w])
 
-        target_all = target_vgg.view(b, c, -1)                      #[b C N2]
-        source_all = source_vgg.view(b, c, -1).transpose(1,2)       #[b N2 C]
+        target_all = target_vgg.view(b, c, -1)  # [b C N2]
+        source_all = source_vgg.view(b, c, -1).transpose(1, 2)  # [b N2 C]
 
-
-        source_norm = source_all/(source_all.norm(dim=2, keepdim=True)+self.eps)
-        target_norm = target_all/(target_all.norm(dim=1, keepdim=True)+self.eps)
+        source_norm = source_all / (source_all.norm(dim=2, keepdim=True) + self.eps)
+        target_norm = target_all / (target_all.norm(dim=1, keepdim=True) + self.eps)
         try:
-            correction = torch.bmm(source_norm, target_norm)                       #[b N2 N2]
+            correction = torch.bmm(source_norm, target_norm)  # [b N2 N2]
         except:
             print("An exception occurred")
             print(source_norm.shape)
             print(target_norm.shape)
-        (correction_max,max_indices) = torch.max(correction, dim=1)
+        (correction_max, max_indices) = torch.max(correction, dim=1)
 
         # interple with bilinear sampling
         if use_bilinear_sampling:
@@ -199,15 +198,15 @@ class PerceptualCorrectness(nn.Module):
         else:
             input_sample = self.resample(source_vgg, flow).view(b, c, -1)
 
-        correction_sample = F.cosine_similarity(input_sample, target_all)    #[b 1 N2]
-        loss_map = torch.exp(-correction_sample/(correction_max+self.eps))
+        correction_sample = F.cosine_similarity(input_sample, target_all)  # [b 1 N2]
+        loss_map = torch.exp(-correction_sample / (correction_max + self.eps))
         if mask is None:
             loss = torch.mean(loss_map) - torch.exp(torch.tensor(-1).type_as(loss_map))
         else:
-            mask=F.interpolate(mask, size=(target_vgg.size(2), target_vgg.size(3)))
-            mask=mask.view(-1, target_vgg.size(2)*target_vgg.size(3))
+            mask = F.interpolate(mask, size=(target_vgg.size(2), target_vgg.size(3)))
+            mask = mask.view(-1, target_vgg.size(2) * target_vgg.size(3))
             loss_map = loss_map - torch.exp(torch.tensor(-1).type_as(loss_map))
-            loss = torch.sum(mask * loss_map)/(torch.sum(mask)+self.eps)
+            loss = torch.sum(mask * loss_map) / (torch.sum(mask) + self.eps)
 
         # print(correction_sample[0,2076:2082])
         # print(correction_max[0,2076:2082])
@@ -234,16 +233,15 @@ class PerceptualCorrectness(nn.Module):
 
     def bilinear_warp(self, source, flow):
         [b, c, h, w] = source.shape
-        x = torch.arange(w).view(1, -1).expand(h, -1).type_as(source).float() / (w-1)
-        y = torch.arange(h).view(-1, 1).expand(-1, w).type_as(source).float() / (h-1)
-        grid = torch.stack([x,y], dim=0)
+        x = torch.arange(w).view(1, -1).expand(h, -1).type_as(source).float() / (w - 1)
+        y = torch.arange(h).view(-1, 1).expand(-1, w).type_as(source).float() / (h - 1)
+        grid = torch.stack([x, y], dim=0)
         grid = grid.unsqueeze(0).expand(b, -1, -1, -1)
-        grid = 2*grid - 1
-        flow = 2*flow/torch.tensor([w, h]).view(1, 2, 1, 1).expand(b, -1, h, w).type_as(flow)
-        grid = (grid+flow).permute(0, 2, 3, 1)
+        grid = 2 * grid - 1
+        flow = 2 * flow / torch.tensor([w, h]).view(1, 2, 1, 1).expand(b, -1, h, w).type_as(flow)
+        grid = (grid + flow).permute(0, 2, 3, 1)
         input_sample = F.grid_sample(source, grid).view(b, c, -1)
         return input_sample
-
 
 
 class VGG19(torch.nn.Module):
