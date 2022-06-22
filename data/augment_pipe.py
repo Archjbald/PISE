@@ -91,6 +91,7 @@ class AugmentPipe(torch.nn.Module):
     def __init__(self, blit=0, geom=0, color=0, deform=True):
         super(AugmentPipe, self).__init__()
         self.p = 0.
+        self.adjust = 0.
 
         self.blit = blit
         self.geom = geom
@@ -103,8 +104,8 @@ class AugmentPipe(torch.nn.Module):
     def update_p(self, val):
         self.buff.append(val.detach().clone().cpu())
         if len(self.buff) >= 4:
-            adjust = np.sign(torch.cat(self.buff).mean() - 0.6) * len(self.buff) * len(self.buff[0]) / (100 * 1000)
-            self.p = min(1., max(0., self.p + adjust))
+            self.adjust = np.sign(torch.cat(self.buff).mean() - 0.6) * len(self.buff) * len(self.buff[0]) / (100 * 1000)
+            self.p = min(1., max(0., self.p + self.adjust))
 
     def forward(self, images):
         assert isinstance(images, torch.Tensor) and images.ndim == 4

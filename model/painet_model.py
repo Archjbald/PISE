@@ -241,6 +241,7 @@ class Painet(BaseModel):
         errors = BaseModel.get_current_errors(self)
         if self.augment is not None:
             errors['p'] = self.augment.p
+            errors['p_adjust'] = self.augment.adjust
         return errors
 
 class CrossEntropyLoss2d(nn.Module):
