@@ -48,5 +48,13 @@ class DrAIverDataset(BaseDataset):
         print('Loading data pairs finished ...')
         return pairs
 
+    def init_actors_list(self):
+        actors_list = {}
+        for img in self.annotation_file.index:
+            actor = '-'.join(img.split('_')[0].split('-')[:2 if img[:10] == "Transpolis" else 1])
+            actors_list.setdefault(actor, []).append(img)
+
+        return actors_list
+
     def name(self):
         return "DrAIverDataset"

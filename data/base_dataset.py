@@ -48,6 +48,7 @@ class BaseDataset(data.Dataset):
 
         self.annotation_file = pd.read_csv(self.bone_file, sep=':')
         self.annotation_file = self.annotation_file.set_index('name')
+        self.actors_list = self.init_actors_list()
 
     def get_paths(self, opt):
         label_paths = []
@@ -58,10 +59,14 @@ class BaseDataset(data.Dataset):
         return label_paths, image_paths, instance_paths, par_paths
 
     def __getitem__(self, index):
-        if self.opt.phase == 'train' or self.opt.random:
-            index = random.randint(0, self.size - 1)
+        if self.opt.phase == 'train' and self.opt.random:
+            actor = random.choice(self.actors_list)
+            P1_name, P2_name = random.sample(self.actors_list[actor], 2)
+        else:
+            if self.opt.phase == 'train' or self.opt.random:
+                index = random.randint(0, self.size - 1)
 
-        P1_name, P2_name = self.name_pairs[index]
+            P1_name, P2_name = self.name_pairs[index]
 
         P1_path = os.path.join(self.image_dir, P1_name)  # person 1
         P2_path = os.path.join(self.image_dir, P2_name)  # person 2
@@ -101,7 +106,7 @@ class BaseDataset(data.Dataset):
         affine_matrix = self.get_affine_matrix(center=center, angle=angle, translate=shift, scale=scale, shear=0)
         BP2 = self.obtain_bone(P2_name, affine_matrix)
 
-        P1_img, P2_img = self.color_augment(P1_img, P2_img)
+        # P1_img, P2_img = self.color_augment(P1_img, P2_img)
         P1 = self.trans(P1_img)
         P2 = self.trans(P2_img)
 
@@ -185,7 +190,7 @@ class BaseDataset(data.Dataset):
 
         img_stack = np.array(img_stack)
         height = img_stack.shape[0] // len(imgs)
-        return [Image.fromarray(img_stack[height * i:height * (i+1)]) for i in range(len(imgs))]
+        return [Image.fromarray(img_stack[height * i:height * (i + 1)]) for i in range(len(imgs))]
 
     def get_inverse_affine_matrix(self, center, angle, translate, scale, shear):
         # code from https://pytorch.org/docs/stable/_modules/torchvision/transforms/functional.html#affine
@@ -255,3 +260,12 @@ class BaseDataset(data.Dataset):
         array_pad[pad_h:256 - pad_h, pad_w:256 - pad_w] = array
 
         return Image.fromarray(array_pad)
+
+    def init_actors_list(self):
+        actors_list = {}
+        for img in self.annotation_file.index:
+            actor = img.split('_')[0]
+            actors_list.setdefault(actor, []).append(img)
+
+        return actors_list
+

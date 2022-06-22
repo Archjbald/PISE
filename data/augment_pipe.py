@@ -47,13 +47,13 @@ def get_rot_mat(theta):
                          [torch.sin(theta), torch.cos(theta), 0]])
 
 
-def rot_img(x, angle):
+def rot_img(x, angle, align_corners=False):
     dtype = x.dtype
     device = x.device
     x = x[None, ...] + 1
     rot_mat = get_rot_mat(angle)[None, ...].type(dtype).to(device).repeat(x.shape[0], 1, 1)
-    grid = F.affine_grid(rot_mat, x.size()).type(dtype)
-    x_rot = F.grid_sample(x, grid)
+    grid = F.affine_grid(rot_mat, x.size(), align_corners=align_corners).type(dtype)
+    x_rot = F.grid_sample(x, grid, align_corners=align_corners)
     return x_rot[0] - 1
 
 
