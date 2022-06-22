@@ -60,7 +60,12 @@ class BaseDataset(data.Dataset):
 
     def __getitem__(self, index):
         if self.opt.phase == 'train' and self.opt.random:
-            actor = random.choice(self.actors_list)
+            actor = random.choice(list(self.actors_list.keys()))
+            for _ in range(10):
+                if len(self.actors_list[actor]) < 2:
+                    actor = random.choice(list(self.actors_list.keys()))
+                else:
+                    break
             P1_name, P2_name = random.sample(self.actors_list[actor], 2)
         else:
             if self.opt.phase == 'train' or self.opt.random:
