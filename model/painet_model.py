@@ -237,6 +237,11 @@ class Painet(BaseModel):
         self.backward_G()
         self.optimizer_G.step()
 
+    def get_current_errors(self):
+        errors = BaseModel.get_current_errors(self)
+        if self.augment is not None:
+            errors['p'] = self.augment.p
+        return errors
 
 class CrossEntropyLoss2d(nn.Module):
     def __init__(self, weight=None, size_average=True, ignore_index=255):
