@@ -25,6 +25,8 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--save_freq', type=int, default=200, help='frequency of saving checkpoints at the end of epochs')
         parser.add_argument('--no_html', action='store_true', help='do not save intermediate training results')
 
+        parser.add_argument('--augment_D', action='store_true', help='use data_augment before discriminator')
+
         self.isTrain = True
 
         return parser
