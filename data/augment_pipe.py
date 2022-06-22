@@ -106,6 +106,7 @@ class AugmentPipe(torch.nn.Module):
         if len(self.buff) >= 4:
             self.adjust = np.sign(torch.cat(self.buff).mean() - 0.6) * len(self.buff) * len(self.buff[0]) / (100 * 1000)
             self.p = min(1., max(0., self.p + self.adjust))
+            self.buff = []
 
     def forward(self, images):
         assert isinstance(images, torch.Tensor) and images.ndim == 4
