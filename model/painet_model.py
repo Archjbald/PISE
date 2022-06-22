@@ -105,7 +105,7 @@ class Painet(BaseModel):
                     lr=opt.lr * opt.ratio_g2d, betas=(0.9, 0.999))
                 self.optimizers.append(self.optimizer_D)
 
-                if opt.augemnt_D:
+                if opt.augment_D:
                     self.augment_D = AugmentPipe(blit=1., geom=1., color=1., deform=True)
                 else:
                     self.augment_D = None
