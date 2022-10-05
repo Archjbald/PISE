@@ -31,6 +31,16 @@ def tensor2im(image_tensor, bytes=255.0, need_dec=False, num_classes=20, imtype=
     return image_numpy.astype(imtype)
 
 
+def get_kps(bp, thresh=0.1, w=None):
+    if w is None:
+        w = bp.shape[-1]
+    v, kps = bp.view(*bp.shape[:-2], -1).max(dim=-1)
+    kps = torch.stack((kps.div(w, rounding_mode='trunc'), kps % w), -1)
+    v = v > thresh
+
+    return kps, v
+
+
 # label color
 label_colours = [(0, 0, 0)
     , (128, 0, 0), (255, 0, 0), (0, 85, 0), (170, 0, 51), (255, 85, 0), (0, 0, 85), (0, 119, 221), (85, 85, 0),
