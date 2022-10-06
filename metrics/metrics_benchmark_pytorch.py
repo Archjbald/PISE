@@ -12,13 +12,11 @@ from metrics.cal_PCKh import get_pckh_from_hpe
 
 
 def get_metrics(results_dir, idx_fake):
-
     sys.path.append(os.path.abspath('../PoseStylizer'))
     from models.hpe.openpose import get_pose_net
     op = get_pose_net()
 
-
-    img_dir = os.path.join(results_dir, 'images')
+    img_dir = os.path.join(results_dir, 'web/images')
 
     source_images_np = ImageDatasetSplit(img_dir, img_idx=0, transform=lambda x: x)
     target_images_np = ImageDatasetSplit(img_dir, img_idx=2, transform=lambda x: x)
@@ -77,7 +75,7 @@ def get_args():
     if len(args) > 1:
         idx_fake = int(args[2])
 
-    results_dir = get_last_dir(results_dir)
+    # results_dir = get_last_dir(results_dir)
 
     return results_dir, idx_fake
 

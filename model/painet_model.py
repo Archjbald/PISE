@@ -1,19 +1,17 @@
+import os
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
-from model.base_model import BaseModel
-from model.networks import base_function, external_function
-import model.networks as network
-from util import task, util
 import itertools
-import data as Dataset
 import numpy as np
-from itertools import islice
-import random
-import os
-import time
 
 import torch.nn.functional as F
 
+from model.base_model import BaseModel
+from model.networks import base_function, external_function
+import model.networks as network
+from util import util
 from data.augment_pipe import AugmentPipe
 
 
@@ -148,8 +146,9 @@ class Painet(BaseModel):
 
     def test(self, save=False):
         """Forward function used in test time"""
-        self.img_gen, self.loss_reg, self.parsav = self.net_G(self.input_P1, self.input_P2, self.input_BP1, self.input_BP2,
-                                                         self.input_SPL1, self.input_SPL2)
+        self.img_gen, self.loss_reg, self.parsav = self.net_G(self.input_P1, self.input_P2, self.input_BP1,
+                                                              self.input_BP2,
+                                                              self.input_SPL1, self.input_SPL2)
         ## test flow ##
         if save:
             self.save_results(self.img_gen, data_name='vis')
@@ -246,6 +245,27 @@ class Painet(BaseModel):
             errors['p'] = self.augment_D.p
             errors['p_adjust'] = self.augment_D.adjust
         return errors
+
+    def get_current_visuals_test(self):
+        nbj = self.opt.structure_nc
+        height, width = self.input_P1.size(2), self.input_P1.size(3)
+        inputs_P1 = util.tensors2ims(self.input_P1.data)
+        inputs_P2 = util.tensors2ims(self.input_P2.data)
+        fakes_P2 = util.tensors2ims(self.img_gen.data)
+
+        inputs_BP1 = util.draw_poses_from_maps(self.input_BP1[:, :nbj].data)
+        inputs_BP2 = util.draw_poses_from_maps(self.input_BP2[:, :nbj].data)
+        imgs = [[inputs_P1[i], inputs_BP1[i][0], inputs_P2[i], inputs_BP2[i][0], fakes_P2[i]] for i in
+                range(self.opt.batchSize)]
+        viss = [np.zeros((height, width * len(imgs[0]), 3)).astype(np.uint8) for _ in inputs_P1]  # h, w, c
+        for j, vis in enumerate(viss):
+            for i, img in enumerate(imgs[j]):
+                vis[:, width * i:width * (i + 1), :] = img
+
+        ret_visuals = [OrderedDict([('vis', vis)]) for vis in viss]
+
+        return ret_visuals
+
 
 class CrossEntropyLoss2d(nn.Module):
     def __init__(self, weight=None, size_average=True, ignore_index=255):

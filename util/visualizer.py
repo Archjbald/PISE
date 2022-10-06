@@ -1,22 +1,22 @@
 import numpy as np
 import os
 import ntpath
-import time
 from . import util
 from . import html
+import math
 
 
-class Visualizer():
+class Visualizer:
     def __init__(self, opt):
-        # self.opt = opt
         self.display_id = opt.display_id
-        self.use_html = opt.phase == 'test' or not opt.no_html
+        self.use_html = not opt.isTrain or not opt.no_html
         self.win_size = opt.display_winsize
         self.name = opt.name
+        self.opt = opt
+        self.saved = False
         if self.display_id > 0:
             import visdom
-            self.vis = visdom.Visdom(port=opt.display_port, env=opt.display_env)
-            self.display_single_pane_ncols = opt.display_single_pane_ncols
+            self.vis = visdom.Visdom(port=opt.display_port)
 
         save_dir = opt.results_dir if opt.phase == 'test' else opt.checkpoints_dir
         if self.use_html:
@@ -24,22 +24,22 @@ class Visualizer():
             self.img_dir = os.path.join(self.web_dir, 'images')
             print('create web directory %s...' % self.web_dir)
             util.mkdirs([self.web_dir, self.img_dir])
+        self.img_paths = []
         self.log_name = os.path.join(save_dir, opt.name, 'loss_log.txt')
-        self.eval_log_name = os.path.join(save_dir, opt.name, 'eval_log.txt')
-        with open(self.log_name, "a") as log_file:
-            now = time.strftime("%c")
-            log_file.write('================ Training Loss (%s) ================\n' % now)
+
+    def reset(self):
+        self.saved = False
 
     # |visuals|: dictionary of images to display or save
-    def display_current_results(self, visuals, epoch):
-        if self.display_id > 0: # show images in the browser
-            if self.display_single_pane_ncols > 0:
+    def display_current_results(self, visuals, epoch, save_result, lbls=[]):
+        if self.display_id > 0:  # show images in the browser
+            ncols = self.opt.display_single_pane_ncols
+            if ncols > 0:
                 h, w = next(iter(visuals.values())).shape[:2]
                 table_css = """<style>
-    table {border-collapse: separate; border-spacing:4px; white-space:nowrap; text-align:center}
-    table td {width: %dpx; height: %dpx; padding: 4px; outline: 4px solid black}
-</style>""" % (w, h)
-                ncols = self.display_single_pane_ncols
+                        table {border-collapse: separate; border-spacing:4px; white-space:nowrap; text-align:center}
+                        table td {width: %dpx; height: %dpx; padding: 4px; outline: 4px solid black}
+                        </style>""" % (w, h)
                 title = self.name
                 label_html = ''
                 label_html_row = ''
@@ -53,7 +53,7 @@ class Visualizer():
                     if idx % ncols == 0:
                         label_html += '<tr>%s</tr>' % label_html_row
                         label_html_row = ''
-                white_image = np.ones_like(image_numpy.transpose([2, 0, 1]))*255
+                white_image = np.ones_like(image_numpy.transpose([2, 0, 1])) * 255
                 while idx % ncols != 0:
                     images.append(white_image)
                     label_html_row += '<td></td>'
@@ -64,54 +64,75 @@ class Visualizer():
                 self.vis.images(images, nrow=ncols, win=self.display_id + 1,
                                 padding=2, opts=dict(title=title + ' images'))
                 label_html = '<table>%s</table>' % label_html
-                self.vis.text(table_css + label_html, win = self.display_id + 2,
+                self.vis.text(table_css + label_html, win=self.display_id + 2,
                               opts=dict(title=title + ' labels'))
             else:
                 idx = 1
                 for label, image_numpy in visuals.items():
-                    #image_numpy = np.flipud(image_numpy)
-                    self.vis.image(image_numpy.transpose([2,0,1]), opts=dict(title=label),
-                                       win=self.display_id + idx)
+                    self.vis.image(image_numpy.transpose([2, 0, 1]), opts=dict(title=label),
+                                   win=self.display_id + idx)
                     idx += 1
 
-        if self.use_html: # save images to a html file
+        if self.use_html and (save_result or not self.saved):  # save images to a html file
+            self.saved = True
+            img_root = f'epoch_{epoch:03d}{"_" if lbls else ""}{"_".join(lbls)}_%s.png'
+            self.img_paths.insert(0, img_root)
             for label, image_numpy in visuals.items():
-                img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
+                img_path = os.path.join(self.img_dir, img_root % label)
                 util.save_image(image_numpy, img_path)
             # update website
+            # webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, reflesh=1)
+            # for n in range(epoch, 0, -1):
+            #     webpage.add_header('epoch [%d]' % n)
+            #     ims = []
+            #     txts = []
+            #     links = []
+            #
+            #     for label, image_numpy in visuals.items():
+            #         img_path = 'epoch%.3d_%s.png' % (n, label)
+            #         ims.append(img_path)
+            #         txts.append(label)
+            #         links.append(img_path)
+            #     webpage.add_images(ims, txts, links, width=self.win_size)
+
             webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, reflesh=1)
-            for n in range(epoch, 0, -1):
-                webpage.add_header('epoch [%d]' % n)
+            for img_root in self.img_paths:
+                splt = img_root.split('_')
+                ep = int(splt[1])
+                lb = splt[2:-1]
+                webpage.add_header(f'epoch [{ep}] ' + ' '.join(lb))
                 ims = []
                 txts = []
                 links = []
 
                 for label, image_numpy in visuals.items():
-                    img_path = 'epoch%.3d_%s.png' % (n, label)
+                    img_path = img_root % label
                     ims.append(img_path)
                     txts.append(label)
                     links.append(img_path)
                 webpage.add_images(ims, txts, links, width=self.win_size)
+
             webpage.save()
 
     # errors: dictionary of error labels and values
-    def plot_current_errors(self, iters, errors):
+    def plot_current_errors(self, epoch, counter_ratio, opt, errors):
         if not hasattr(self, 'plot_data'):
             self.plot_data = {'X': [], 'Y': [], 'legend': list(errors.keys())}
-        self.plot_data['X'].append(iters)
+        self.plot_data['X'].append(epoch + counter_ratio)
         self.plot_data['Y'].append([errors[k] for k in self.plot_data['legend']])
         self.vis.line(
             X=np.stack([np.array(self.plot_data['X'])] * len(self.plot_data['legend']), 1),
             Y=np.array(self.plot_data['Y']),
-            opts={'title': self.name + ' loss over time',
-                  'legend': self.plot_data['legend'],
-                  'xlabel': 'iterations',
-                  'ylabel': 'loss'},
+            opts={
+                'title': self.name + ' loss over time',
+                'legend': self.plot_data['legend'],
+                'xlabel': 'epoch',
+                'ylabel': 'loss'},
             win=self.display_id)
 
     def plot_current_score(self, iters, scores):
         if not hasattr(self, 'plot_score'):
-            self.plot_score = {'X':[],'Y':[], 'legend':list(scores.keys())}
+            self.plot_score = {'X': [], 'Y': [], 'legend': list(scores.keys())}
         self.plot_score['X'].append(iters)
         self.plot_score['Y'].append([scores[k] for k in self.plot_score['legend']])
         self.vis.line(
@@ -132,12 +153,14 @@ class Visualizer():
         self.vis.boxplot(
             X=value,
             opts=dict(legend=name),
-            win=self.display_id+30
+            win=self.display_id + 30
         )
 
     # errors: same format as |errors| of plotCurrentErrors
-    def print_current_errors(self, epoch, i, errors, t):
+    def print_current_errors(self, epoch, i, errors, t, val=False):
         message = '(epoch: %d, iters: %d, time: %.3f) ' % (epoch, i, t)
+        if val:
+            message += 'Val: '
         for k, v in errors.items():
             message += '%s: %.3f ' % (k, v)
 
@@ -152,25 +175,51 @@ class Visualizer():
 
         print(message)
         with open(self.eval_log_name, "a") as log_file:
-            log_file.write('%s\n' % message)  
+            log_file.write('%s\n' % message)
 
-    # save image to the disk
-    def save_images(self, webpage, visuals, image_path):
+            # save image to the disk
+
+    def save_images(self, webpage, visuals, image_paths):
         image_dir = webpage.get_image_dir()
-        short_path = ntpath.basename(image_path[0])
-        name = os.path.splitext(short_path)[0]
+        for i, img_path in enumerate(image_paths):
+            short_path = ntpath.basename(img_path)
+            name = os.path.splitext(short_path)[0]
 
-        webpage.add_header(name)
-        ims = []
-        txts = []
-        links = []
+            webpage.add_header(name)
+            ims = []
+            txts = []
+            links = []
 
-        for label, image_numpy in visuals.items():
-            image_name = '%s___%s.png' % (name, label)
-            save_path = os.path.join(image_dir, image_name)
-            util.save_image(image_numpy, save_path)
+            for label, image_numpy in visuals[i].items():
+                image_name = '%s_%s.jpg' % (img_path, label)
+                save_path = os.path.join(image_dir, image_name)
+                util.save_image(image_numpy, save_path)
 
-            ims.append(image_name)
-            txts.append(label)
-            links.append(image_name)
-        webpage.add_images(ims, txts, links, width=self.win_size)
+                ims.append(image_name)
+                txts.append(label)
+                links.append(image_name)
+            webpage.add_images(ims, txts, links, width=self.win_size)
+
+    # save a group of uncurated images to the disk
+    def save_images_uncurated(self, webpage, images, count):
+        name = "%03d" % count
+        image_dir = webpage.get_image_dir()
+        col = 10
+        row = math.ceil(len(images) / float(col))
+        space = 2
+
+        height, width = np.shape(images[0])[0], np.shape(images[0])[1]
+        output = np.zeros((height * row + space * (row - 1), width * col + space * (col - 1), 3)).astype(
+            np.uint8)  # h, w, c
+
+        i = 0
+        j = -1
+        for image in images:
+            j += 1
+            if j >= col:
+                i += 1
+                j = 0
+            output[height * i + space * i:height * (i + 1) + space * i,
+            width * j + space * j:width * (j + 1) + space * j, :] = image
+        save_path = os.path.join(image_dir, name + '.jpg')
+        util.save_image(output, save_path)
