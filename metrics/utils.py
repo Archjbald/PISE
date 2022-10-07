@@ -102,10 +102,13 @@ class ImageDatasetSplit(Dataset):
         image = np.array(image)
 
         if self.len_img is None:
-            self.len_img = round(image.shape[1] / (image.shape[0] / self.ratio))
+            # self.len_img = round(image.shape[1] / (image.shape[0] / self.ratio))
+            self.len_img = round(image.shape[1] / image.shape[0])  # assume square images
 
         w = int(image.shape[1] / self.len_img)
-        split_img = image[:, self.img_idx * w: (self.img_idx + 1) * w]
+        w_img = int(w / self.ratio)
+        pad = (w - w_img) // 2  # remove padding
+        split_img = image[:, self.img_idx * w + pad: self.img_idx * w + w_img + pad]
 
         if self.transform is not None:
             image = self.transform(split_img)
