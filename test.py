@@ -41,6 +41,7 @@ class HPEAnnots:
 if __name__ == '__main__':
     # get testing options
     opt = TestOptions().parse()
+    opt.no_html = True
     # creat a dataset
     dataset = Dataset.create_dataloader(opt)
 
@@ -60,7 +61,7 @@ if __name__ == '__main__':
             model.test()
             # visualizer.display_current_results(model.get_current_visuals(), i, save_result=True)
             img_paths = model.get_image_paths()
-            hpe_annots.add_annots(model.input_BP1, img_paths=[ip.split('___')[0] for ip in img_paths])
+            hpe_annots.add_annots(model.input_BP1, img_paths=[ip.split('___')[1] for ip in img_paths])
 
             visuals = model.get_current_visuals_test()
             visualizer.save_images(webpage, visuals, img_paths)
